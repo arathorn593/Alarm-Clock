@@ -12,12 +12,13 @@
 #define DATE_DISP_INDEX 3
 #define TIME_TYPE_INDEX 4
 
-byte redLCD;
+byte redLCD;  //hold the light levels for the three colors
 byte greenLCD; 
 byte blueLCD;
-boolean displayDate;
+boolean displayDate;  //determines if date is displayed with time
 boolean militaryTime; //if false then 12 hour AM/PM
 
+#define STRUCT_SIZE 5 //the number of bytes in the struct (used to increment loop)
 typedef struct{
   byte settings; //yes/no for each alarm. order = alarm?, light?, sound?
   byte days; //first bit = nothing, days procede from there
@@ -35,9 +36,9 @@ typedef struct{
 void setup(){
   //input general settings
   /*byte(index) function
-             0  red LCD
-             1  green LCD
-             2  blue LCD
+             0  red LCD light level
+             1  green LCD light level
+             2  blue LCD light level
              3  display date (1/0) (in byte index 0)
              4  military(1)/norm(0) (in byte index 0)
              5  alarms start
@@ -60,10 +61,10 @@ void setup(){
   
   //input alarms.
    int value;
-   for(i = alarmStart; i < memorySize; i +=4 ){
+   for(i = ALARM_START; i < MEM_SIZE; i += STRUCT_SIZE ){
      value = EEPROM.read(i);
      if(bitRead(value, 0) == 1){
-       
+       //input alarm
      }
    }
 }
