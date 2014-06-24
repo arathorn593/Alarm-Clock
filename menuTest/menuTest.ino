@@ -26,8 +26,8 @@ void setup(){
 }
 
 long oldPosition = 0;
-long newPosition;
-long realPosition;
+long newPosition = 0;
+long realPosition= 0;
 void loop(){
   //update encoder
   realPosition = enc.read();
