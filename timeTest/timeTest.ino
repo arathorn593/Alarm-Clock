@@ -12,17 +12,15 @@ boolean flashState = false; //state (on/off) of flashing letter
 int flashCounter = 0; //counts up ticks and then changes flash state
 int clkIndex = 0; //index of which letter is flashing
                     //R = 0; G = 1; B = 2; M = 3
-#define R 0
-#define G 1
-#define B 2
-#define M 3
+#define L 0
+#define M 1
 
 boolean idle = false;
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0;
 #define IDLE_TIME 5000 //milliseconds of inactivity it takes to stop blinking letter
 
-#define CLK_INDEX_LEN 4
+#define CLK_INDEX_LEN 2
 long oldPosition = 0;
 long newPosition = 0;
 long realPosition= 0;
@@ -91,6 +89,7 @@ void loop(){
                                          //by 4 puts each increment in the middle
   //update index                         //of a division and not at the beginning
   if(newPosition != oldPosition){
+/*
     //wrap around index if it is out of bounds
     if(newPosition > oldPosition){
       if(clkIndex >= CLK_INDEX_LEN - 1){
@@ -98,6 +97,8 @@ void loop(){
       }else{
         clkIndex++;
       }
+      
+
     }else{
       if(clkIndex <= 0){
         clkIndex = CLK_INDEX_LEN -1;
@@ -105,6 +106,10 @@ void loop(){
         clkIndex--;
       } 
     }
+    */
+    if(idle == false)
+      clkIndex = 1 - clkIndex;
+      
     oldPosition = newPosition;
     flashState = false; //set character to be off so user knows move has happened
     flashCounter = 0;
@@ -124,27 +129,26 @@ void loop(){
   lcd.setCursor(0, 0);
   //print characters for menu and color selection
   if(!flashState){
-    switch(clkIndex){
-      case 0: lcd.print(" GB");break;
-      case 1: lcd.print("R B");break;
-      case 2: lcd.print("RG ");break;
-      case 3: lcd.print("RGB");break;
+    if(clkIndex == 0){
+      lcd.print(" ");
+    }else{
+      lcd.print("L");
     }
     lcd.setCursor(15, 0);
-    if(clkIndex == 3){
+    if(clkIndex == 1){
       lcd.print(" ");
     }else{
       lcd.print("M");
     }
   }else{
-    lcd.print("RGB");
+    lcd.print("L");
     lcd.setCursor(15, 0);
     lcd.print("M");
   }
   
   //get date/time
   now = rtc.now();
-  displayTime(&now, 0, 5);
+  displayTime(&now, 0, 4);
 
   //set cursor for date display
   lcd.setCursor(0, 1);

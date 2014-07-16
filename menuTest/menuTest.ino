@@ -1,3 +1,5 @@
+#include <LiquidCrystal.h>
+
 #include <Encoder.h>
 #include <LiquidCrystal.h>
 
@@ -6,7 +8,7 @@
 #define RED_PIN 11
 
 #define MENU_SIZE 3
-String menuItems[] = {
+char * menuItems[] = {
   "Clock",
   "Alarms",
   "Settings"
@@ -16,7 +18,13 @@ int index;
 LiquidCrystal lcd(1, 4, 5, 6, 7, 8);
 Encoder enc(2,3);
 
+void displayMenu(char** items){
+    int numItems = sizeof(items);
+    Serial.println(numItems);
+}
+
 void setup(){
+  Serial.begin(9600);
   lcd.begin(16, 2);
   pinMode(BLUE_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
@@ -29,6 +37,7 @@ long oldPosition = 0;
 long newPosition = 0;
 long realPosition= 0;
 void loop(){
+  displayMenu(menuItems);
   //update encoder
   realPosition = enc.read();
   newPosition = (realPosition + 1) / 4;  //calculate each increment based on
