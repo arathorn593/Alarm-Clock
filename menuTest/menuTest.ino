@@ -1,7 +1,6 @@
 #include <LiquidCrystal.h>
-
 #include <Encoder.h>
-#include <LiquidCrystal.h>
+
 
 #define BLUE_PIN 9
 #define GREEN_PIN 10
