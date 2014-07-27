@@ -35,24 +35,33 @@ void displayItems(String selectedItem, String nextItem,
 	lcd.print(nextItem);
 }
 
+void updateEndArray(long encArray[], Encoder *enc){
+	encArray[REAL_POS] = enc->read();
+	newPos = (
+}
+
+//the position the encoder library sees (~360 ticks per rotation)
+#define REAL_POS 0
+//the new position of the encoder (24 ticks per rotation)
+#define NEW_POS 1
+//the old position of the encoder (24 ticks per rotation)
+#define OLD_POS 2
+ 
 //runs the menu selection
 void runMenu(MenuItem items[], int numItems, 
-				LiquidCrystal lcd, Encoder enc){
-	//the old position of the encoder (24 ticks per rotation)
-	long oldPos = 0;
-	//the new position of the encoder (24 ticks per rotation)
-	long newPos = 0;
-	//the position the encoder library sees (~360 ticks per rotation)
-	long realPos = 0;
+				LiquidCrystal *lcd, Encoder *enc){
+	long encInfo[3];
 
 	while (!goBack){
 		//update encoder 
 		//FIXME should this be in another function?
-		realPos = enc.read();
+		realPos = enc->read();
 		newPos= (realPos + 1) / 4;	;  //calculate each increment based on
 												   //the position. Add 1 so that division
 												   //by 4 puts each increment in the middle
 		//update index                             //of a division and not at the beginning
-		if(newPos != oldPos
+		if(newPos != oldPos){
+			
+		}
 	}
 }
