@@ -6,19 +6,22 @@
 #define GREEN_PIN 10
 #define RED_PIN 11
 
+//mode constants
+#define TIME_MODE 0
+#define MAIN_MENU 1
+
 //Global variables
 //mode/menu that is displayed currently
-int mode = 0;
+int mode = TIME_MODE;
 
 String displayText = "hello";
 
 
 //LCD/Encoder setup
-LiquidCrystal lcd(1, 4, 5, 6, 7, 8);
 Encoder enc(2,3);
+LiquidCrystal lcd(1, 4, 5, 6, 7, 8);
 
 void setup() {
-  Serial.begin(9600);
   lcd.begin(16, 2);
   pinMode(BLUE_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
@@ -62,10 +65,17 @@ void onTick(){
 void drawLCD(){
   //clear lcd
   lcd.clear();
-  lcd.print(displayText);
+  switch(mode){
+     case TIME_MODE:
+       break;
+       
+     case MAIN_MENU:
+       break;
+  }
 }
 
 void loop() {
+  onTick();
   //update encoder and take appropriate action
   int encChange = getEncShift();
   if(encChange > 0){
