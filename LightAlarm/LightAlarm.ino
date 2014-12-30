@@ -10,10 +10,26 @@
 #define LIGHT_PIN 0
 #define BUTTON_PIN 13
 
+//define menu indexes
+#define CLOCK_INDEX 0
+#define ALARMS_INDEX 1
+#define RED_INDEX 2
+#define GREEN_INDEX 3
+#define BLUE_INDEX 4
 
 //mode constants
 #define TIME_MODE 0
 #define MAIN_MENU 1
+#define ALARMS _MENU 2
+
+#define ALARM_SIZE 5 //the number of bytes in the struct (used to increment loop)
+typedef struct{
+  byte light; //yes/no in byte index 0
+  byte days; //first bit = nothing, days procede from there
+  byte hour; //decimal hour(24)
+  byte minutes; //decimal
+  byte timeLight; //decimal, time in minutes before alarm
+}Alarm;
 
 //Global variables
 //mode/menu that is displayed currently
@@ -30,8 +46,21 @@ DateTime now;
 bool buttonState = false;
 bool oldButtonState = false;
 bool lightState = false;
-String displayText = "hello";
+int redVal = 255;
+int blueVal = 255;
+int greenVal = 255;
+bool selected = false; //is the item at the pointer selected in the main menu
 
+int numAlarms = 0;
+
+#define MENU_SIZE 5
+char * menuItems[] = {
+  "Clock",
+  "Alarms",
+  "Red",
+  "Green",
+  "Blue"
+};
 
 //LCD/Encoder setup
 Encoder enc(2,3);
@@ -60,18 +89,51 @@ bool buttonPressed(){
   oldButtonState = buttonState;
   buttonState = (bool)digitalRead(BUTTON_PIN);
   return (buttonState && !oldButtonState);
-  lcd.print(buttonState);
 }
 
-void onEncIncrement(){
-  index = (index + 1) % menuLen;
+int changeColor(int colorVal, int change){
+  colorVal += change;
+  if(colorVal > 255){
+    colorVal = 255;
+  }else if(colorVal < 0){
+    colorVal = 0;
+  }
+  return colorVal;
 }
 
-void onEncDecrement(){
-  if(index == 0){
-    index = menuLen - 1;
+void changeSelected(int change){
+  switch(index){
+    case RED_INDEX:
+      redVal = changeColor(redVal, change);
+      break;
+      
+    case GREEN_INDEX:
+      greenVal = changeColor(greenVal, change);
+      break;
+      
+    case BLUE_INDEX:
+      blueVal = changeColor(blueVal, change);
+      break;
+  }
+}
+
+void onEncIncrement(int change){
+  if(selected){
+    changeSelected(change);
   }else{
-    index--;
+    index = (index + 1) % menuLen;
+  }
+}
+
+void onEncDecrement(int change){
+  if(selected){
+    changeSelected(change);
+  }else{
+    if(index == 0){
+      index = menuLen - 1;
+    }else{
+      index--;
+    }
   }
 }
 
@@ -84,19 +146,50 @@ void onEncStill(){
   }
 }
 
-void onButton(){
+void onTimeButton(){
   if(index == 0){
     lightState = !lightState;
-  }    
+  }else if(index == 1){
+    gotoMain();
+  }
+}
+
+
+
+void onMainButton(){
+  if(selected){
+    selected = false;
+  }else{
+    switch(index){
+      case CLOCK_INDEX:
+        gotoTime();
+        break;
+      
+      case ALARMS_INDEX:
+        gotoAlarms();
+        break;
+       
+      default:  //it is one of the colors (change if more added)
+        selected = true;
+        
+    }
+  }
+}
+
+void onButton(){
+  switch(mode){
+    case TIME_MODE:
+      onTimeButton();
+      break;
+    case MAIN_MENU:
+      onMainButton();
+      break;
+  }
 }
 
 void activity(){
   ticksSinceMove = 0;
   inactive = false;
-}
-
-void onTick(){
-  displayText = "tick";
 }
 
 void displayDateTime(DateTime *now, int row, int col){
@@ -170,7 +263,16 @@ void gotoTime(){
 void gotoMain(){
   mode = MAIN_MENU;
   lcd.noCursor();
-  
+  menuLen = MENU_SIZE;
+  index = 0;
+}
+
+//goto the alarm menu
+void gotoAlarms(){
+  mode = ALARMS_MENU;
+  lcd.noCursor();
+  menuLen = numAlarms;
+  index = 0;
 }
 
 void drawTime(){
@@ -195,7 +297,50 @@ void drawTime(){
   lcd.setCursor(cursorCol, cursorRow);
 }
 
+void printMenuItem(int index, int row){
+  lcd.print(menuItems[index]);
+  //move cursor to end (right adjust setting val)
+  lcd.setCursor(13, row);
+  if(menuItems[index] == "Red"){
+    lcd.print(redVal);
+  }else if(menuItems[index] == "Green"){
+    lcd.print(greenVal);
+  }else if(menuItems[index] == "Blue"){
+    lcd.print(blueVal);
+  }
+}
+
+void drawMain(){  
+  //draw pointer
+  lcd.write(">");
+  //draw first item
+  lcd.setCursor(1, 0);
+  printMenuItem(index, 0);
+  //draw second item
+  lcd.setCursor(1, 1);
+  printMenuItem((index + 1) % menuLen, 1); //print next item (w/ wraparound)
+  
+  //move cursor back to pointer
+  lcd.home();
+  //blink cursor if the item is selected
+  if(selected){
+    lcd.blink();
+  }else{
+    lcd.noBlink();
+  }
+  
+}
+
+void setColors(){
+  //set colors. invert values because backlight led's weird (common anode)
+  analogWrite(RED_PIN, 255-redVal);
+  analogWrite(GREEN_PIN, 255-greenVal);
+  analogWrite(BLUE_PIN, 255-blueVal);
+}
+
 void drawLCD(){
+  //update the colors of the backlight
+  setColors();
   //clear lcd
   lcd.clear();
   switch(mode){
@@ -204,6 +349,7 @@ void drawLCD(){
        break;
        
      case MAIN_MENU:
+       drawMain();
        break;
   }
   digitalWrite(LIGHT_PIN, lightState);
@@ -232,15 +378,14 @@ void setup() {
 }
 
 void loop() {
-  onTick();
   //update encoder and take appropriate action
   int encChange = getEncShift();
   if(encChange > 0){
     activity();
-    onEncIncrement();
+    onEncIncrement(encChange);
   }else if(encChange < 0){
     activity();
-    onEncDecrement();
+    onEncDecrement(encChange);
   }else if(buttonPressed()){
     onButton();
   }else{
