@@ -1,16 +1,16 @@
-#include <LiquidCrystal.h>
 #include <Encoder.h>
-#include "RTClib.h"
+#include <RTClib.h>
+#include <LiquidCrystal.h>
 #include <Wire.h>
 #include <EEPROM.h>
 
 //Pin definitions
-#define BLUE_PIN 9
+#define BLUE_PIN 11
 #define GREEN_PIN 10
-#define RED_PIN 11
-#define LIGHT_PIN 0
-#define BUTTON_PIN 13
-#define BUZZER_PIN 12
+#define RED_PIN 9
+#define LIGHT_PIN 13
+#define BUTTON_PIN 4
+#define BUZZER_PIN 5
 
 #define LCD_ROWS 2
 #define LCD_COLS 16
@@ -137,9 +137,9 @@ char * menuItems[] = {
 };
 
 //LCD/Encoder setup
-Encoder enc(2,3);
-LiquidCrystal lcd(1, 4, 5, 6, 7, 8);
-RTC_DS1307 rtc;
+Encoder enc(3, 2);
+LiquidCrystal lcd(1, 0, 6, 7, 8, 12);
+RTC_DS3231 rtc;
 
 long oldPosition = 0;
 long newPosition = 0;
@@ -484,7 +484,7 @@ void displayDateTime(DateTime *now, int row, int col){
   //set cursor for date display
   lcd.setCursor(0, 1);
   
-  switch(now->dayOfWeek()){
+  switch(now->dayOfTheWeek()){
     case 0: lcd.print("Sun"); break;
     case 1: lcd.print("Mon"); break;
     case 2: lcd.print("Tue"); break;
@@ -872,7 +872,7 @@ void checkAlarms(){
    int curMin = getDayMin(now.hour(), now.minute());
    int alarmMin = -1;
    for(int i = 0; i < numAlarms; i++){
-     if((alarms[i].active && bitRead(alarms[i].days, now.dayOfWeek())) || snoozes[i] > 0){
+     if((alarms[i].active && bitRead(alarms[i].days, now.dayOfTheWeek())) || snoozes[i] > 0){
        alarmMin = getDayMin(alarms[i].hrs, alarms[i].minutes);
        if(curMin == alarmMin || snoozes[i] == curMin){
          alarmState = true; 
@@ -910,7 +910,7 @@ void setup() {
   Wire.begin();
   rtc.begin();
   
-  if(!rtc.isrunning()){
+  if(rtc.lostPower()){
     //print message to LCD
     lcd.print("RTC NOT Running");
     //sets rtc to date and time of sketch compile
